@@ -58,7 +58,7 @@ const App = () => {
 
   const handleAdd = () => {
     const novaEntrada = { ...formData, id: uuidv4() };
-    const existentes = Array.isArray(appointments[dateKey]) ? appointintments[dateKey] : [];
+    const existentes = appointments[dateKey] || [];
     if (!fromData.horario || !formData.duracao) {
       alert("Preencha horário e duração antes de agendar.");
       return;
