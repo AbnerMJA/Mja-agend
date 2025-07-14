@@ -47,6 +47,7 @@ const App = () => {
   }, [dateKey]);
 
   const parseTime = (str) => {
+    if (!str || !str.includes(":")) return 0;
     const [h, m] = str.split(":").map(Number);
     return h * 60 + m;
   };
@@ -58,6 +59,11 @@ const App = () => {
   const handleAdd = () => {
     const novaEntrada = { ...formData, id: uuidv4() };
     const existentes = appointments[dateKey] || [];
+    if (!fromData.horario || !formData.duracao) {
+      alert("Preencha horário e duração antes de agendar.");
+      return;
+    }
+    
     const novaHora = parseTime(formData.horario);
     const novaFim = novaHora + parseInt(formData.duracao || 0);
 
