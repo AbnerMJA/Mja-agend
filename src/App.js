@@ -56,35 +56,39 @@ const App = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAdd = () => {
-    const novaEntrada = { ...formData, id: uuidv4() };
-    const existentes = appointments[dateKey] || [];
-    if (!fromData.horario || !formData.duracao) {
-      alert("Preencha horário e duração antes de agendar.");
-      return;
-    }
-    
-    const novaHora = parseTime(formData.horario);
-    const novaFim = novaHora + parseInt(formData.duracao || 0);
+const handleAdd = async () => {
+  if (!formData.horario || !formData.duracao) {
+    alert("Preencha horário e duração antes de agendar.");
+    return;
+  }
 
-    let conflitos = 0;
-    for (const ag of existentes) {
-      const agInicio = parseTime(ag.horario);
-      const agFim = agInicio + parseInt(ag.duracao || 0);
-      if (!(novaFim <= agInicio || novaHora >= agFim)) {
-        conflitos++;
-      }
-    }
+  const novaHora = parseTime(formData.horario);
+  const novaFim = novaHora + parseInt(formData.duracao);
 
-    if (conflitos >= 3) {
-      alert("Limite de 3 agendamentos sobrepostos atingido.");
-      return;
-    }
+  // Lê os agendamentos diretamente do banco em tempo real
+  const dbRef = ref(db);
+  const snapshot = await get(child(dbRef, `agendamentos/${dateKey}`));
+  const existentes = snapshot.exists() ? snapshot.val() : [];
 
-    const atualizados = [...existentes, novaEntrada];
-    set(ref(db, `agendamentos/${dateKey}`), atualizados);
-    setAppointments({ ...appointments, [dateKey]: atualizados });
-  };
+  let conflitos = 0;
+  for (const ag of existentes) {
+    const agInicio = parseTime(ag.horario);
+    const agFim = agInicio + parseInt(ag.duracao || 0);
+    if (!(novaFim <= agInicio || novaHora >= agFim)) {
+      conflitos++;
+    }
+  }
+
+  if (conflitos >= 3) {
+    alert("Limite de 3 agendamentos sobrepostos atingido.");
+    return;
+  }
+
+  const novaEntrada = { ...formData, id: uuidv4() };
+  const atualizados = [...existentes, novaEntrada];
+  await set(ref(db, `agendamentos/${dateKey}`), atualizados);
+  setAppointments((prev) => ({ ...prev, [dateKey]: atualizados }));
+};
 
   const handleDelete = (id) => {
     const filtrados = (appointments[dateKey] || []).filter((a) => a.id !== id);
