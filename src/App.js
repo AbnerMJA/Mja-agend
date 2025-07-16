@@ -67,8 +67,16 @@ const handleAdd = async () => {
 
   // Lê os agendamentos diretamente do banco em tempo real
   const dbRef = ref(db);
-  const snapshot = await get(child(dbRef, `agendamentos/${dateKey}`));
-  const existentes = snapshot.exists() ? snapshot.val() : [];
+  const snapshot = await get(child(ref(db), `agendamentos/${dateKey}`));
+let existentes = snapshot.val();
+
+if (!Array.isArray(existentes)) {
+  if (typeof existentes === "object" && existentes !== null) {
+    existentes = Object.values(existentes); // Converte objeto indexado em lista
+  } else {
+    existentes = []; // Qualquer outro caso: vazio
+  }
+}
 
   let conflitos = 0;
   for (const ag of existentes) {
